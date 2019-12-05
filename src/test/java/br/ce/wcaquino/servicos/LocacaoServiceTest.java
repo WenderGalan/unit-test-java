@@ -1,6 +1,7 @@
 package br.ce.wcaquino.servicos;
 
 
+import br.ce.wcaquino.daos.LocacaoDAO;
 import br.ce.wcaquino.entidades.Filme;
 import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
@@ -10,19 +11,21 @@ import br.ce.wcaquino.utils.DataUtils;
 import org.junit.*;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
+import org.mockito.Mockito;
 
 import java.util.*;
 
 import static br.ce.wcaquino.matchers.MatchersProprios.*;
-import static br.ce.wcaquino.utils.DataUtils.isMesmaData;
-import static br.ce.wcaquino.utils.DataUtils.obterDataComDiferencaDias;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class LocacaoServiceTest {
 
     private LocacaoService service;
+    private SPCService spcService;
+    private LocacaoDAO locacaoDAO;
 
     @Rule
     public ErrorCollector error = new ErrorCollector();
@@ -33,6 +36,10 @@ public class LocacaoServiceTest {
     @Before
     public void setup() {
         service = new LocacaoService();
+        locacaoDAO = Mockito.mock(LocacaoDAO.class);
+        service.setLocacaoDAO(locacaoDAO);
+        spcService = Mockito.mock(SPCService.class);
+        service.setSpcService(spcService);
     }
 
     @Test
@@ -103,5 +110,20 @@ public class LocacaoServiceTest {
         // Assert.assertTrue(ehSegunda);
         assertThat(retorno.getDataRetorno(), caiEm(Calendar.MONDAY));
         assertThat(retorno.getDataRetorno(), caiNumaSegunda());
+    }
+
+    @Test
+    public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException, LocadoraException {
+        // Cenario
+        Usuario usuario = new Usuario("Wender");
+        Usuario usuario2 = new Usuario("Wender");
+        List<Filme> filmes = Arrays.asList(new Filme("Filme 1", 2, 4.0));
+
+        when(spcService.possuiNegativacao(usuario)).thenReturn(true);
+
+        exception.expect(LocadoraException.class);
+        exception.expectMessage("Usuário negativado");
+
+        service.alugarFilme(usuario2, filmes);
     }
 }
