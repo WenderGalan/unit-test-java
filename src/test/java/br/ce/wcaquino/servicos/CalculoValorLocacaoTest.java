@@ -6,11 +6,16 @@ import br.ce.wcaquino.entidades.Locacao;
 import br.ce.wcaquino.entidades.Usuario;
 import br.ce.wcaquino.exceptions.FilmeSemEstoqueException;
 import br.ce.wcaquino.exceptions.LocadoraException;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.mockito.Mockito;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -19,11 +24,15 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
+@Data
 @RunWith(Parameterized.class)
 public class CalculoValorLocacaoTest {
 
+    @InjectMocks
     private LocacaoService service;
+    @Mock
     private LocacaoDAO locacaoDAO;
+    @Mock
     private SPCService spcService;
 
     @Parameterized.Parameter
@@ -37,20 +46,16 @@ public class CalculoValorLocacaoTest {
 
     @Before
     public void setup() {
-        service = new LocacaoService();
-        locacaoDAO = Mockito.mock(LocacaoDAO.class);
-        service.setLocacaoDAO(locacaoDAO);
-        spcService = Mockito.mock(SPCService.class);
-        service.setSpcService(spcService);
+        MockitoAnnotations.initMocks(this);
     }
 
-    private static Filme filme1 = new Filme("Filme 1", 2, 4.0);
-    private static Filme filme2 = new Filme("Filme 2", 2, 4.0);
-    private static Filme filme3 = new Filme("Filme 3", 2, 4.0);
-    private static Filme filme4 = new Filme("Filme 4", 2, 4.0);
-    private static Filme filme5 = new Filme("Filme 5", 2, 4.0);
-    private static Filme filme6 = new Filme("Filme 6", 2, 4.0);
-    private static Filme filme7 = new Filme("Filme 7", 2, 4.0);
+    private static Filme filme1 = Filme.builder().nome("Filme 1").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme2 = Filme.builder().nome("Filme 2").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme3 = Filme.builder().nome("Filme 3").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme4 = Filme.builder().nome("Filme 4").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme5 = Filme.builder().nome("Filme 5").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme6 = Filme.builder().nome("Filme 6").estoque(2).precoLocacao(4.0).build();
+    private static Filme filme7 = Filme.builder().nome("Filme 7").estoque(2).precoLocacao(4.0).build();
 
     // @Parameterized.Parameters(name = "Teste {index} = {0} - {1}")
     @Parameterized.Parameters(name = "{2}")
@@ -68,7 +73,7 @@ public class CalculoValorLocacaoTest {
     @Test
     public void deveCalcularValorLocacaoConsiderandoDescontos() throws FilmeSemEstoqueException, LocadoraException {
         // cenario
-        Usuario usuario = new Usuario("Wender");
+        Usuario usuario = Usuario.builder().nome("Wender").build();
 
         // acao
         Locacao resultado = service.alugarFilme(usuario, filmes);

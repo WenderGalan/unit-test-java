@@ -24,8 +24,8 @@ public class AssertTest {
 		Assert.assertTrue("bola".equalsIgnoreCase("Bola"));
 		Assert.assertTrue("bola".startsWith("bo"));
 		
-		Usuario u1 = new Usuario("Usuario 1");
-		Usuario u2 = new Usuario("Usuario 1");
+		Usuario u1 = Usuario.builder().nome("Usuario 1").build();
+		Usuario u2 = Usuario.builder().nome("Usuario 1").build();
 		Usuario u3 = null;
 		
 		Assert.assertEquals(u1, u2);

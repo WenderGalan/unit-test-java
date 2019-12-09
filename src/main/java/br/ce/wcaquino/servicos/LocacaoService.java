@@ -21,28 +21,28 @@ public class LocacaoService {
     private EmailService emailService;
 
     public Locacao alugarFilme(Usuario usuario, List<Filme> filmes) throws FilmeSemEstoqueException, LocadoraException {
-        if (usuario == null) {
+        if (usuario == null)
             throw new LocadoraException("Usuario vazio");
-        }
 
-        if (filmes == null || filmes.isEmpty()) {
+        if (filmes == null || filmes.isEmpty())
             throw new LocadoraException("Filme vazio");
-        }
 
         for (Filme filme : filmes) {
-            if (filme.getEstoque() == 0) {
+            if (filme.getEstoque() == 0)
                 throw new FilmeSemEstoqueException();
-            }
         }
 
-        if (spcService.possuiNegativacao(usuario)) {
+        boolean negativado;
+        try {
+            negativado = spcService.possuiNegativacao(usuario);
+        } catch (Exception e) {
+            throw new LocadoraException("Problemas com o SPC, tente novamente mais tarde.");
+        }
+
+        if (negativado)
             throw new LocadoraException("Usuário negativado");
-        }
 
-        Locacao locacao = new Locacao();
-        locacao.setFilmes(filmes);
-        locacao.setUsuario(usuario);
-        locacao.setDataLocacao(new Date());
+        Locacao locacao = Locacao.builder().filmes(filmes).usuario(usuario).dataLocacao(new Date()).build();
         Double valorTotal = 0d;
         for (int i = 0; i < filmes.size(); i++) {
             Filme filme = filmes.get(i);
@@ -68,9 +68,8 @@ public class LocacaoService {
         //Entrega no dia seguinte
         Date dataEntrega = new Date();
         dataEntrega = adicionarDias(dataEntrega, 1);
-        if (DataUtils.verificarDiaSemana(dataEntrega, Calendar.SUNDAY)) {
+        if (DataUtils.verificarDiaSemana(dataEntrega, Calendar.SUNDAY))
             dataEntrega = adicionarDias(dataEntrega, 1);
-        }
         locacao.setDataRetorno(dataEntrega);
 
         //Salvando a locacao...
@@ -79,22 +78,11 @@ public class LocacaoService {
         return locacao;
     }
 
-    public void notificarAtrasos () {
+    public void notificarAtrasos() {
         List<Locacao> locacoes = locacaoDAO.obterLocacoesPendentes();
         for (Locacao locacao : locacoes) {
-            emailService.notificarAtraso(locacao.getUsuario());
+            if (locacao.getDataRetorno().before(new Date()))
+                emailService.notificarAtraso(locacao.getUsuario());
         }
-    }
-
-    public void setLocacaoDAO(LocacaoDAO locacaoDAO) {
-        this.locacaoDAO = locacaoDAO;
-    }
-
-    public void setSpcService(SPCService spcService) {
-        this.spcService = spcService;
-    }
-
-    public void setEmailService(EmailService emailService) {
-        this.emailService = emailService;
     }
 }
