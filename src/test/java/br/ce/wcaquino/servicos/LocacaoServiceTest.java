@@ -16,6 +16,7 @@ import org.mockito.Mockito;
 import java.util.*;
 
 import static br.ce.wcaquino.matchers.MatchersProprios.*;
+import static br.ce.wcaquino.utils.DataUtils.obterDataComDiferencaDias;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -26,6 +27,7 @@ public class LocacaoServiceTest {
     private LocacaoService service;
     private SPCService spcService;
     private LocacaoDAO locacaoDAO;
+    private EmailService emailService;
 
     @Rule
     public ErrorCollector error = new ErrorCollector();
@@ -40,6 +42,8 @@ public class LocacaoServiceTest {
         service.setLocacaoDAO(locacaoDAO);
         spcService = Mockito.mock(SPCService.class);
         service.setSpcService(spcService);
+        emailService = Mockito.mock(EmailService.class);
+        service.setEmailService(emailService);
     }
 
     @Test
@@ -113,17 +117,38 @@ public class LocacaoServiceTest {
     }
 
     @Test
-    public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException, LocadoraException {
+    public void naoDeveAlugarFilmeParaNegativadoSPC() throws FilmeSemEstoqueException {
         // Cenario
         Usuario usuario = new Usuario("Wender");
-        Usuario usuario2 = new Usuario("Wender");
-        List<Filme> filmes = Arrays.asList(new Filme("Filme 1", 2, 4.0));
+        List<Filme> filmes = Collections.singletonList(new Filme("Filme 1", 2, 4.0));
 
         when(spcService.possuiNegativacao(usuario)).thenReturn(true);
 
-        exception.expect(LocadoraException.class);
-        exception.expectMessage("Usuário negativado");
+        try {
+            service.alugarFilme(usuario, filmes);
+            // verificacao
+            Assert.fail();
+        } catch (LocadoraException e) {
+            Assert.assertThat(e.getMessage(), is("Usuário negativado"));
+        }
 
-        service.alugarFilme(usuario2, filmes);
+        Mockito.verify(spcService).possuiNegativacao(usuario);
+    }
+
+    @Test
+    public void deveEnviarEmailParaLocacoesAtrasadas() {
+        // cenario
+        Usuario usuario = new Usuario("Wender");
+        Locacao locacao = new Locacao();
+        locacao.setDataRetorno(obterDataComDiferencaDias(-2));
+        locacao.setUsuario(usuario);
+        List<Locacao> locacoes = Collections.singletonList(locacao);
+        Mockito.when(locacaoDAO.obterLocacoesPendentes()).thenReturn(locacoes);
+
+        // acao
+        service.notificarAtrasos();
+
+        // verificacao
+        Mockito.verify(emailService).notificarAtraso(usuario);
     }
 }
