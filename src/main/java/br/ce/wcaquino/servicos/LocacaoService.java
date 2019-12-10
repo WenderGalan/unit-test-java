@@ -43,7 +43,7 @@ public class LocacaoService {
         if (negativado)
             throw new LocadoraException("Usuário negativado");
 
-        Locacao locacao = Locacao.builder().filmes(filmes).usuario(usuario).dataLocacao(new Date()).build();
+        Locacao locacao = Locacao.builder().filmes(filmes).usuario(usuario).dataLocacao(Calendar.getInstance().getTime()).build();
         Double valorTotal = 0d;
         for (int i = 0; i < filmes.size(); i++) {
             Filme filme = filmes.get(i);
@@ -67,7 +67,7 @@ public class LocacaoService {
         locacao.setValor(valorTotal);
 
         //Entrega no dia seguinte
-        Date dataEntrega = new Date();
+        Date dataEntrega = Calendar.getInstance().getTime();
         dataEntrega = adicionarDias(dataEntrega, 1);
         if (DataUtils.verificarDiaSemana(dataEntrega, Calendar.SUNDAY))
             dataEntrega = adicionarDias(dataEntrega, 1);
@@ -82,7 +82,7 @@ public class LocacaoService {
     public void notificarAtrasos() {
         List<Locacao> locacoes = locacaoDAO.obterLocacoesPendentes();
         for (Locacao locacao : locacoes) {
-            if (locacao.getDataRetorno().before(new Date()))
+            if (locacao.getDataRetorno().before(Calendar.getInstance().getTime()))
                 emailService.notificarAtraso(locacao.getUsuario());
         }
     }
@@ -91,7 +91,7 @@ public class LocacaoService {
         Locacao novaLocacao = Locacao.builder()
                 .usuario(locacao.getUsuario())
                 .filmes(locacao.getFilmes())
-                .dataLocacao(new Date())
+                .dataLocacao(Calendar.getInstance().getTime())
                 .dataRetorno(obterDataComDiferencaDias(dias))
                 .valor(locacao.getValor() * dias)
                 .build();
