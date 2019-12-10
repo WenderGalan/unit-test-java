@@ -11,10 +11,7 @@ import br.ce.wcaquino.utils.DataUtils;
 import org.junit.*;
 import org.junit.rules.ErrorCollector;
 import org.junit.rules.ExpectedException;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 
 import java.util.*;
 
@@ -173,5 +170,30 @@ public class LocacaoServiceTest {
 
         // acao
         service.alugarFilme(usuario, filmes);
+    }
+
+    @Test
+    public void deveProrrogarUmaLocacao() {
+        // cenario
+        Locacao locacao = Locacao.builder().
+                usuario(Usuario.builder().nome("Wender").build())
+                .dataLocacao(new Date())
+                .filmes(Collections.singletonList(Filme.builder().nome("Filme 1").estoque(2).precoLocacao(4.0).build()))
+                .dataRetorno(obterDataComDiferencaDias(5))
+                .valor(4.0)
+                .build();
+
+        // acao
+        service.prorrogarLocacao(locacao, 3);
+
+        // verificacao
+        // Captura o valor passado
+        ArgumentCaptor<Locacao> argCapt = ArgumentCaptor.forClass(Locacao.class);
+        verify(locacaoDAO).salvar(argCapt.capture());
+        Locacao locacaoRetornada = argCapt.getValue();
+
+        error.checkThat(locacaoRetornada.getValor(), is(12.0));
+        error.checkThat(locacaoRetornada.getDataLocacao(), ehHoje());
+        error.checkThat(locacaoRetornada.getDataRetorno(), ehHojeComDiferencaDias(3));
     }
 }

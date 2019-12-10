@@ -13,6 +13,7 @@ import java.util.Date;
 import java.util.List;
 
 import static br.ce.wcaquino.utils.DataUtils.adicionarDias;
+import static br.ce.wcaquino.utils.DataUtils.obterDataComDiferencaDias;
 
 public class LocacaoService {
 
@@ -84,5 +85,16 @@ public class LocacaoService {
             if (locacao.getDataRetorno().before(new Date()))
                 emailService.notificarAtraso(locacao.getUsuario());
         }
+    }
+
+    public void prorrogarLocacao(Locacao locacao, int dias) {
+        Locacao novaLocacao = Locacao.builder()
+                .usuario(locacao.getUsuario())
+                .filmes(locacao.getFilmes())
+                .dataLocacao(new Date())
+                .dataRetorno(obterDataComDiferencaDias(dias))
+                .valor(locacao.getValor() * dias)
+                .build();
+        locacaoDAO.salvar(novaLocacao);
     }
 }
